@@ -83,6 +83,60 @@
         </textarea>
       </div>
 
+      <!-- ── IMAGE UPLOAD ZONE ── -->
+      <div class="image-upload-zone">
+        <div class="image-upload-header">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          <span>{{ 'image_upload_label' | translate }}</span>
+          <span class="upload-hint">{{ 'image_upload_hint' | translate }}</span>
+        </div>
+
+        <div class="image-drop-area" [class.has-image]="imagePreviewUrl">
+          <!-- Preview de l'image sélectionnée -->
+          <ng-container *ngIf="imagePreviewUrl; else uploadPrompt">
+            <div class="image-preview-wrap">
+              <img [src]="imagePreviewUrl" alt="Aperçu" class="image-preview-thumb" />
+              <div class="image-preview-info">
+                <span class="image-file-name">{{ selectedImage?.name }}</span>
+                <span class="image-file-size">{{ (selectedImage?.size || 0) / 1024 / 1024 | number:'1.1-1' }} Mo</span>
+              </div>
+              <button class="image-clear-btn" (click)="clearImage()" type="button" title="Supprimer l'image">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+          </ng-container>
+          <ng-template #uploadPrompt>
+            <label class="upload-label" for="imageInput">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <span>{{ 'image_upload_cta' | translate }}</span>
+            </label>
+          </ng-template>
+          <input id="imageInput" type="file" accept="image/jpeg,image/png,image/webp" class="upload-input-hidden" (change)="onImageSelected($event)" />
+        </div>
+
+        <!-- Bouton Analyser texte + image -->
+        <button
+          class="btn-analyze-image"
+          (click)="onAnalyzeWithImage()"
+          [disabled]="imageLoading || !selectedImage"
+          [class.loading]="imageLoading">
+          <span class="btn-analyze__inner" *ngIf="!imageLoading">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            {{ 'btn_analyze_image' | translate }}
+          </span>
+          <span class="btn-analyze__inner" *ngIf="imageLoading">
+            <span class="spinner"></span>
+            {{ 'btn_analyzing_image' | translate }}
+          </span>
+        </button>
+
+        <!-- Erreur image -->
+        <div class="alert alert--error" *ngIf="imageError">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          {{ imageError }}
+        </div>
+      </div>
+
       <!-- Error -->
       <div class="alert alert--error" *ngIf="error">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
@@ -105,122 +159,145 @@
     <!-- ── RESULTS PANEL ── -->
     <div class="results-area" *ngIf="result">
 
-      <!-- Score ring card -->
-      <div class="score-card">
-        <div class="score-ring-wrap">
-          <svg class="score-ring" viewBox="0 0 120 120">
-            <circle class="ring-track" cx="60" cy="60" r="52"/>
-            <circle class="ring-fill" cx="60" cy="60" r="52"
-              [style.stroke-dashoffset]="326.7 - (326.7 * result.globalScore / 100)"/>
-          </svg>
-          <div class="score-center">
-            <span class="score-value">{{ result.globalScore }}</span>
-            <span class="score-label">/ 100</span>
-          </div>
-        </div>
-        <div class="score-info">
-          <h2 class="score-title">{{ 'score_title' | translate }}</h2>
-          <p class="score-platform">
-            <span class="platform-badge">{{ result.contentType | titlecase }}</span>
-          </p>
-          <p class="score-verdict"
-            [class.verdict--great]="result.globalScore >= 75"
-            [class.verdict--ok]="result.globalScore >= 50 && result.globalScore < 75"
-            [class.verdict--low]="result.globalScore < 50">
-            {{ result.globalScore >= 75 ? ('verdict_great' | translate) : result.globalScore >= 50 ? ('verdict_ok' | translate) : ('verdict_low' | translate) }}
-          </p>
-        </div>
-      </div>
-
-      <!-- Criteria bars -->
-      <div class="panel panel--criteria">
+      <!-- ══ CARTE ANALYSE DE QUALITÉ (TÂCHE 1 — MÊME DESIGN QUE CARTE IMAGE) ══ -->
+      <div class="panel panel--quality">
         <div class="panel-header">
-          <span class="panel-title">{{ 'criteria_title' | translate }}</span>
+          <span class="panel-title">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            {{ 'quality_analysis_title' | translate }}
+          </span>
+          <span class="compat-badge"
+            [class.badge--high]="result.globalScore >= 75"
+            [class.badge--mid]="result.globalScore >= 50 && result.globalScore < 75"
+            [class.badge--low]="result.globalScore < 50">
+            {{ result.globalScore }}/100
+          </span>
         </div>
-        <div class="criteria-list">
-          <div class="crit-row" *ngFor="let c of result.criteria">
-            <div class="crit-meta">
-              <span class="crit-name">{{ c.name }}</span>
-              <span class="crit-score" [class.high]="c.score >= 70" [class.mid]="c.score >= 40 && c.score < 70" [class.low]="c.score < 40">
-                {{ c.score }}
-              </span>
+
+        <div class="compat-body">
+
+          <!-- Top section : Score ring + Analyse globale + Plateforme -->
+          <div class="compat-top">
+            <div class="compat-score-wrap">
+              <svg class="score-ring score-ring--sm" viewBox="0 0 120 120">
+                <circle class="ring-track" cx="60" cy="60" r="52"/>
+                <circle class="ring-fill" cx="60" cy="60" r="52"
+                  [class.ring-fill--high]="result.globalScore >= 75"
+                  [class.ring-fill--mid]="result.globalScore >= 50 && result.globalScore < 75"
+                  [class.ring-fill--low]="result.globalScore < 50"
+                  [style.stroke-dashoffset]="326.7 - (326.7 * result.globalScore / 100)"/>
+              </svg>
+              <div class="score-center">
+                <span class="score-value score-value--sm">{{ result.globalScore }}</span>
+                <span class="score-label">/ 100</span>
+              </div>
             </div>
-            <div class="crit-track">
-              <div class="crit-fill"
-                [style.width.%]="c.score"
-                [class.fill--high]="c.score >= 70"
-                [class.fill--mid]="c.score >= 40 && c.score < 70"
-                [class.fill--low]="c.score < 40">
+
+            <!-- Analyse textuelle -->
+            <div class="compat-explanation">
+              <div class="quality-meta-row">
+                <p class="compat-label">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                  {{ 'quality_analysis_label' | translate }}
+                </p>
+                <span class="platform-badge-mini">{{ result.contentType | titlecase }}</span>
+              </div>
+              <p class="compat-text">
+                {{ result.globalScore >= 75 ? ('verdict_great' | translate) : result.globalScore >= 50 ? ('verdict_ok' | translate) : ('verdict_low' | translate) }}
+                <ng-container *ngIf="result.strengths?.length">
+                  — {{ result.strengths.join('. ') }}.
+                </ng-container>
+              </p>
+            </div>
+          </div>
+
+          <!-- Détail des critères réorganisé -->
+          <div class="quality-criteria-section" *ngIf="result.criteria?.length">
+            <p class="compat-label">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+              {{ 'quality_criteria_label' | translate }}
+            </p>
+            <div class="quality-criteria-grid">
+              <div class="crit-chip" *ngFor="let c of result.criteria">
+                <div class="crit-chip-header">
+                  <span class="crit-chip-name">{{ c.name }}</span>
+                  <span class="crit-chip-val" [class.high]="c.score >= 70" [class.mid]="c.score >= 40 && c.score < 70" [class.low]="c.score < 40">{{ c.score }}</span>
+                </div>
+                <div class="crit-chip-bar">
+                  <div class="crit-chip-fill" [style.width.%]="c.score" [class.fill--high]="c.score >= 70" [class.fill--mid]="c.score >= 40 && c.score < 70" [class.fill--low]="c.score < 40"></div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      <!-- Strengths & Weaknesses side by side -->
-      <div class="sw-grid">
-        <div class="sw-card sw-card--strength">
-          <div class="sw-header">
-            <span class="sw-icon">✓</span>
-            <h3>{{ 'strengths_title' | translate }}</h3>
+          <!-- ══ POINTS FORTS & POINTS FAIBLES (TEXTE SEUL) ══ -->
+          <div class="sw-grid-compact" *ngIf="result.strengths?.length || result.weaknesses?.length">
+            <!-- Points Forts -->
+            <div class="sw-col-compact">
+              <p class="compat-label label--success">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                {{ 'points_forts_title' | translate }}
+              </p>
+              <ul class="compat-list compat-list--success" *ngIf="result.strengths?.length; else noTextStrengths">
+                <li *ngFor="let s of result.strengths?.slice(0, 4)">{{ s }}</li>
+              </ul>
+              <ng-template #noTextStrengths>
+                <p class="compat-empty-hint">{{ 'no_strengths_notable' | translate }}</p>
+              </ng-template>
+            </div>
+
+            <!-- Points Faibles -->
+            <div class="sw-col-compact">
+              <p class="compat-label label--warn">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                {{ 'points_faibles_title' | translate }}
+              </p>
+              <ul class="compat-list compat-list--warn" *ngIf="result.weaknesses?.length; else noTextWeaknesses">
+                <li *ngFor="let w of result.weaknesses?.slice(0, 4)">{{ w }}</li>
+              </ul>
+              <ng-template #noTextWeaknesses>
+                <p class="compat-empty-hint">{{ 'no_weaknesses_notable' | translate }}</p>
+              </ng-template>
+            </div>
           </div>
-          <ul class="sw-list">
-            <li *ngFor="let s of result.strengths">{{ s }}</li>
-          </ul>
-        </div>
-        <div class="sw-card sw-card--weak">
-          <div class="sw-header">
-            <span class="sw-icon">!</span>
-            <h3>{{ 'weaknesses_title' | translate }}</h3>
+
+          <!-- Suggestions d'amélioration -->
+          <div class="compat-suggestions" *ngIf="result.recommendations?.length">
+            <p class="compat-label">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              {{ 'image_compat_suggestions' | translate }}
+            </p>
+            <ul class="compat-suggestions-list">
+              <li *ngFor="let r of result.recommendations">{{ r }}</li>
+            </ul>
+
+            <!-- Bouton Perfectionner ce texte -->
+            <div class="improve-action-wrap" style="margin-top: 18px;">
+              <button class="btn-improve" (click)="onImprove()" [disabled]="improving" [class.loading]="improving">
+                <span class="btn-improve__inner" *ngIf="!improving">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  {{ 'btn_improve' | translate }}
+                </span>
+                <span class="btn-improve__inner" *ngIf="improving">
+                  <span class="spinner"></span>
+                  {{ 'btn_improving' | translate }}
+                </span>
+              </button>
+
+              <div class="alert alert--error" *ngIf="improveError">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                {{ improveError }}
+              </div>
+            </div>
           </div>
-          <ul class="sw-list">
-            <li *ngFor="let w of result.weaknesses">{{ w }}</li>
-          </ul>
+
         </div>
-      </div>
+      </div><!-- /panel--quality -->
 
-      <!-- Recommendations -->
-      <div class="panel panel--reco">
-        <div class="panel-header">
-          <span class="panel-title">
-            <span class="reco-dot"></span>
-            {{ 'recommendations_title' | translate }}
-          </span>
-          <span class="reco-count">{{ result.recommendations.length }}</span>
-        </div>
-        <ol class="reco-list">
-          <li *ngFor="let r of result.recommendations; let i = index" class="reco-item">
-            <span class="reco-num">{{ i + 1 }}</span>
-            <span class="reco-text">{{ r }}</span>
-          </li>
-        </ol>
-
-        <!-- CTA: Perfectionner ce texte -->
-        <div class="improve-action-wrap">
-          <button class="btn-improve" (click)="onImprove()" [disabled]="improving" [class.loading]="improving">
-            <span class="btn-improve__inner" *ngIf="!improving">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-              {{ 'btn_improve' | translate }}
-            </span>
-            <span class="btn-improve__inner" *ngIf="improving">
-              <span class="spinner"></span>
-              {{ 'btn_improving' | translate }}
-            </span>
-          </button>
-
-          <div class="alert alert--error" *ngIf="improveError">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-            {{ improveError }}
-          </div>
-        </div>
-      </div>
-
-      <!-- ── VERSION OPTIMISÉE (IMPROVED CONTENT PANEL) ── -->
+      <!-- ── VERSION OPTIMISÉE (TEXTE SEUL) ── -->
       <div class="panel panel--improved" *ngIf="improvedText">
         <div class="panel-header">
-          <span class="panel-title">
-            {{ 'improved_panel_title' | translate }}
-          </span>
+          <span class="panel-title">{{ 'improved_panel_title' | translate }}</span>
           <span class="improved-badge">{{ 'improved_badge' | translate }}</span>
         </div>
 
@@ -228,7 +305,6 @@
           <p class="improved-text-content">{{ improvedText }}</p>
         </div>
 
-        <!-- Action Bar -->
         <div class="improved-actions">
           <button class="btn-action-ghost" (click)="copyToClipboard()">
             <svg *ngIf="!copied" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
@@ -247,19 +323,15 @@
           </button>
         </div>
 
-        <!-- ── SIDE BY SIDE COMPARISON ── -->
         <div class="comparison-view" *ngIf="showComparison">
           <h3 class="comparison-title">{{ 'comparison_title' | translate }}</h3>
           <div class="comparison-grid">
-
             <div class="comparison-col comp-col--original">
               <div class="comp-col-header">
                 <span class="comp-tag comp-tag--original">{{ 'comp_original_tag' | translate }}</span>
                 <span class="comp-score">Score: {{ result.globalScore }}/100</span>
               </div>
-              <div class="comp-body">
-                <p>{{ text }}</p>
-              </div>
+              <div class="comp-body"><p>{{ text }}</p></div>
             </div>
 
             <div class="comparison-col comp-col--improved">
@@ -267,20 +339,346 @@
                 <span class="comp-tag comp-tag--improved">{{ 'comp_improved_tag' | translate }}</span>
                 <span class="comp-score comp-score--highlight">{{ 'comp_revised_status' | translate }}</span>
               </div>
-              <div class="comp-body">
-                <p>{{ improvedText }}</p>
+              <div class="comp-body"><p>{{ improvedText }}</p></div>
+            </div>
+          </div>
+        </div>
+      </div><!-- /panel--improved -->
+
+      <!-- ── CARTE COMPATIBILITÉ IMAGE (DANS RESULTS AREA) ── -->
+      <div class="panel panel--image-compat" *ngIf="imageCompatibilityResult">
+        <div class="panel-header">
+          <span class="panel-title">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            {{ 'image_compat_title' | translate }}
+          </span>
+          <span class="compat-badge"
+            [class.badge--high]="imageCompatibilityResult.compatibilityScore >= 75"
+            [class.badge--mid]="imageCompatibilityResult.compatibilityScore >= 50 && imageCompatibilityResult.compatibilityScore < 75"
+            [class.badge--low]="imageCompatibilityResult.compatibilityScore < 50">
+            {{ imageCompatibilityResult.compatibilityScore }}/100
+          </span>
+        </div>
+
+        <div class="compat-body">
+          <div class="compat-top">
+            <div class="compat-score-wrap">
+              <svg class="score-ring score-ring--sm" viewBox="0 0 120 120">
+                <circle class="ring-track" cx="60" cy="60" r="52"/>
+                <circle class="ring-fill" cx="60" cy="60" r="52"
+                  [class.ring-fill--high]="imageCompatibilityResult.compatibilityScore >= 75"
+                  [class.ring-fill--mid]="imageCompatibilityResult.compatibilityScore >= 50 && imageCompatibilityResult.compatibilityScore < 75"
+                  [class.ring-fill--low]="imageCompatibilityResult.compatibilityScore < 50"
+                  [style.stroke-dashoffset]="326.7 - (326.7 * imageCompatibilityResult.compatibilityScore / 100)"/>
+              </svg>
+              <div class="score-center">
+                <span class="score-value score-value--sm">{{ imageCompatibilityResult.compatibilityScore }}</span>
+                <span class="score-label">/ 100</span>
               </div>
             </div>
 
-          </div>
-        </div>
+            <div class="compat-image-preview" *ngIf="imagePreviewUrl">
+              <img [src]="imagePreviewUrl" alt="Image analysée" class="compat-thumb" />
+            </div>
 
-      </div><!-- /panel--improved -->
+            <div class="compat-explanation">
+              <p class="compat-label">{{ 'image_compat_explanation' | translate }}</p>
+              <p class="compat-text">{{ imageCompatibilityResult.explanation }}</p>
+            </div>
+          </div>
+
+          <!-- ══ POINTS FORTS & POINTS FAIBLES (IMAGE COMPAT - DANS RESULTS) ══ -->
+          <div class="sw-grid-compact" *ngIf="imageCompatibilityResult.strengths?.length || imageCompatibilityResult.weaknesses?.length">
+            <!-- Points Forts -->
+            <div class="sw-col-compact">
+              <p class="compat-label label--success">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                {{ 'points_forts_title' | translate }}
+              </p>
+              <ul class="compat-list compat-list--success" *ngIf="imageCompatibilityResult.strengths?.length; else noImgStrengths1">
+                <li *ngFor="let s of imageCompatibilityResult.strengths?.slice(0, 4)">{{ s }}</li>
+              </ul>
+              <ng-template #noImgStrengths1>
+                <p class="compat-empty-hint">{{ 'no_strengths_notable' | translate }}</p>
+              </ng-template>
+            </div>
+
+            <!-- Points Faibles -->
+            <div class="sw-col-compact">
+              <p class="compat-label label--warn">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                {{ 'points_faibles_title' | translate }}
+              </p>
+              <ul class="compat-list compat-list--warn" *ngIf="imageCompatibilityResult.weaknesses?.length; else noImgWeaknesses1">
+                <li *ngFor="let w of imageCompatibilityResult.weaknesses?.slice(0, 4)">{{ w }}</li>
+              </ul>
+              <ng-template #noImgWeaknesses1>
+                <p class="compat-empty-hint">{{ 'no_weaknesses_notable' | translate }}</p>
+              </ng-template>
+            </div>
+          </div>
+
+          <div class="compat-suggestions" *ngIf="imageCompatibilityResult.suggestions?.length">
+            <p class="compat-label">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              {{ 'image_compat_suggestions' | translate }}
+            </p>
+            <ul class="compat-suggestions-list">
+              <li *ngFor="let s of imageCompatibilityResult.suggestions">{{ s }}</li>
+            </ul>
+          </div>
+
+          <!-- ══ BOUTON RÉÉCRIRE POUR L'IMAGE (TÂCHE 2) ══ -->
+          <div class="image-improve-action-wrap">
+            <button class="btn-improve-for-image" (click)="onImproveForImage()" [disabled]="improvingForImage" [class.loading]="improvingForImage">
+              <span class="btn-improve__inner" *ngIf="!improvingForImage">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/><path d="m18 2 4 4-10 10H8v-4l10-10z"/></svg>
+                {{ 'btn_improve_for_image' | translate }}
+              </span>
+              <span class="btn-improve__inner" *ngIf="improvingForImage">
+                <span class="spinner"></span>
+                {{ 'btn_improving_for_image' | translate }}
+              </span>
+            </button>
+
+            <div class="alert alert--error" *ngIf="improveForImageError" style="margin-top: 10px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              {{ improveForImageError }}
+            </div>
+          </div>
+
+          <!-- ══ RÉSULTAT RÉÉCRITURE POUR IMAGE ══ -->
+          <div class="panel--image-improved-box" *ngIf="improvedTextForImage">
+            <div class="image-improved-header">
+              <span class="image-improved-title">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                {{ 'image_improved_title' | translate }}
+              </span>
+              <span class="compat-badge" *ngIf="newCompatibilityScore !== null"
+                [class.badge--high]="newCompatibilityScore >= 75"
+                [class.badge--mid]="newCompatibilityScore >= 50 && newCompatibilityScore < 75"
+                [class.badge--low]="newCompatibilityScore < 50">
+                {{ 'image_new_score' | translate }}: {{ newCompatibilityScore }}/100
+              </span>
+            </div>
+
+            <div class="improved-box" style="margin-top: 12px;">
+              <p class="improved-text-content">{{ improvedTextForImage }}</p>
+            </div>
+
+            <div class="improved-actions">
+              <button class="btn-action-ghost" (click)="copyRewrittenText()">
+                <svg *ngIf="!copiedForImage" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                <svg *ngIf="copiedForImage" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                {{ copiedForImage ? ('btn_copied' | translate) : ('btn_copy' | translate) }}
+              </button>
+
+              <button class="btn-action-ghost" (click)="toggleImageComparison()">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 3v18"/></svg>
+                {{ showImageComparison ? ('btn_hide_compare_image' | translate) : ('btn_compare_image' | translate) }}
+              </button>
+
+              <button class="btn-action-primary" (click)="applyRewrittenText()">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                {{ 'btn_use_rewritten' | translate }}
+              </button>
+            </div>
+
+            <!-- Vue comparaison pour l'image -->
+            <div class="comparison-view" *ngIf="showImageComparison">
+              <h3 class="comparison-title">{{ 'comparison_title' | translate }}</h3>
+              <div class="comparison-grid">
+                <div class="comparison-col comp-col--original">
+                  <div class="comp-col-header">
+                    <span class="comp-tag comp-tag--original">{{ 'comp_original_tag' | translate }}</span>
+                    <span class="comp-score">Score: {{ imageCompatibilityResult.compatibilityScore }}/100</span>
+                  </div>
+                  <div class="comp-body"><p>{{ text }}</p></div>
+                </div>
+
+                <div class="comparison-col comp-col--improved">
+                  <div class="comp-col-header">
+                    <span class="comp-tag comp-tag--improved">{{ 'comp_rewritten_tag' | translate }}</span>
+                    <span class="comp-score comp-score--highlight">Score: {{ newCompatibilityScore }}/100</span>
+                  </div>
+                  <div class="comp-body"><p>{{ improvedTextForImage }}</p></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div><!-- /panel--image-compat in results-area -->
 
     </div><!-- /results-area -->
 
+    <!-- ── IMAGE COMPATIBILITY RESULT (STANDALONE) ── -->
+    <div class="panel panel--image-compat" *ngIf="imageCompatibilityResult && !result">
+      <div class="panel-header">
+        <span class="panel-title">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          {{ 'image_compat_title' | translate }}
+        </span>
+        <span class="compat-badge"
+          [class.badge--high]="imageCompatibilityResult.compatibilityScore >= 75"
+          [class.badge--mid]="imageCompatibilityResult.compatibilityScore >= 50 && imageCompatibilityResult.compatibilityScore < 75"
+          [class.badge--low]="imageCompatibilityResult.compatibilityScore < 50">
+          {{ imageCompatibilityResult.compatibilityScore }}/100
+        </span>
+      </div>
+
+      <div class="compat-body">
+        <div class="compat-top">
+          <div class="compat-score-wrap">
+            <svg class="score-ring score-ring--sm" viewBox="0 0 120 120">
+              <circle class="ring-track" cx="60" cy="60" r="52"/>
+              <circle class="ring-fill" cx="60" cy="60" r="52"
+                [class.ring-fill--high]="imageCompatibilityResult.compatibilityScore >= 75"
+                [class.ring-fill--mid]="imageCompatibilityResult.compatibilityScore >= 50 && imageCompatibilityResult.compatibilityScore < 75"
+                [class.ring-fill--low]="imageCompatibilityResult.compatibilityScore < 50"
+                [style.stroke-dashoffset]="326.7 - (326.7 * imageCompatibilityResult.compatibilityScore / 100)"/>
+            </svg>
+            <div class="score-center">
+              <span class="score-value score-value--sm">{{ imageCompatibilityResult.compatibilityScore }}</span>
+              <span class="score-label">/ 100</span>
+            </div>
+          </div>
+
+          <div class="compat-image-preview" *ngIf="imagePreviewUrl">
+            <img [src]="imagePreviewUrl" alt="Image analysée" class="compat-thumb" />
+          </div>
+
+          <div class="compat-explanation">
+            <p class="compat-label">{{ 'image_compat_explanation' | translate }}</p>
+            <p class="compat-text">{{ imageCompatibilityResult.explanation }}</p>
+          </div>
+        </div>
+
+        <!-- ══ POINTS FORTS & POINTS FAIBLES (IMAGE COMPAT - STANDALONE) ══ -->
+        <div class="sw-grid-compact" *ngIf="imageCompatibilityResult.strengths?.length || imageCompatibilityResult.weaknesses?.length">
+          <!-- Points Forts -->
+          <div class="sw-col-compact">
+            <p class="compat-label label--success">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              {{ 'points_forts_title' | translate }}
+            </p>
+            <ul class="compat-list compat-list--success" *ngIf="imageCompatibilityResult.strengths?.length; else noImgStrengths2">
+              <li *ngFor="let s of imageCompatibilityResult.strengths?.slice(0, 4)">{{ s }}</li>
+            </ul>
+            <ng-template #noImgStrengths2>
+              <p class="compat-empty-hint">{{ 'no_strengths_notable' | translate }}</p>
+            </ng-template>
+          </div>
+
+          <!-- Points Faibles -->
+          <div class="sw-col-compact">
+            <p class="compat-label label--warn">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              {{ 'points_faibles_title' | translate }}
+            </p>
+            <ul class="compat-list compat-list--warn" *ngIf="imageCompatibilityResult.weaknesses?.length; else noImgWeaknesses2">
+              <li *ngFor="let w of imageCompatibilityResult.weaknesses?.slice(0, 4)">{{ w }}</li>
+            </ul>
+            <ng-template #noImgWeaknesses2>
+              <p class="compat-empty-hint">{{ 'no_weaknesses_notable' | translate }}</p>
+            </ng-template>
+          </div>
+        </div>
+
+        <div class="compat-suggestions" *ngIf="imageCompatibilityResult.suggestions?.length">
+          <p class="compat-label">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            {{ 'image_compat_suggestions' | translate }}
+          </p>
+          <ul class="compat-suggestions-list">
+            <li *ngFor="let s of imageCompatibilityResult.suggestions">{{ s }}</li>
+          </ul>
+        </div>
+
+        <!-- ══ BOUTON RÉÉCRIRE POUR L'IMAGE (TÂCHE 2) ══ -->
+        <div class="image-improve-action-wrap">
+          <button class="btn-improve-for-image" (click)="onImproveForImage()" [disabled]="improvingForImage" [class.loading]="improvingForImage">
+            <span class="btn-improve__inner" *ngIf="!improvingForImage">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/><path d="m18 2 4 4-10 10H8v-4l10-10z"/></svg>
+              {{ 'btn_improve_for_image' | translate }}
+            </span>
+            <span class="btn-improve__inner" *ngIf="improvingForImage">
+              <span class="spinner"></span>
+              {{ 'btn_improving_for_image' | translate }}
+            </span>
+          </button>
+
+          <div class="alert alert--error" *ngIf="improveForImageError" style="margin-top: 10px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            {{ improveForImageError }}
+          </div>
+        </div>
+
+        <!-- ══ RÉSULTAT RÉÉCRITURE POUR IMAGE ══ -->
+        <div class="panel--image-improved-box" *ngIf="improvedTextForImage">
+          <div class="image-improved-header">
+            <span class="image-improved-title">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+              {{ 'image_improved_title' | translate }}
+            </span>
+            <span class="compat-badge" *ngIf="newCompatibilityScore !== null"
+              [class.badge--high]="newCompatibilityScore >= 75"
+              [class.badge--mid]="newCompatibilityScore >= 50 && newCompatibilityScore < 75"
+              [class.badge--low]="newCompatibilityScore < 50">
+              {{ 'image_new_score' | translate }}: {{ newCompatibilityScore }}/100
+            </span>
+          </div>
+
+          <div class="improved-box" style="margin-top: 12px;">
+            <p class="improved-text-content">{{ improvedTextForImage }}</p>
+          </div>
+
+          <div class="improved-actions">
+            <button class="btn-action-ghost" (click)="copyRewrittenText()">
+              <svg *ngIf="!copiedForImage" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              <svg *ngIf="copiedForImage" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              {{ copiedForImage ? ('btn_copied' | translate) : ('btn_copy' | translate) }}
+            </button>
+
+            <button class="btn-action-ghost" (click)="toggleImageComparison()">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 3v18"/></svg>
+              {{ showImageComparison ? ('btn_hide_compare_image' | translate) : ('btn_compare_image' | translate) }}
+            </button>
+
+            <button class="btn-action-primary" (click)="applyRewrittenText()">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              {{ 'btn_use_rewritten' | translate }}
+            </button>
+          </div>
+
+          <!-- Vue comparaison pour l'image -->
+          <div class="comparison-view" *ngIf="showImageComparison">
+            <h3 class="comparison-title">{{ 'comparison_title' | translate }}</h3>
+            <div class="comparison-grid">
+              <div class="comparison-col comp-col--original">
+                <div class="comp-col-header">
+                  <span class="comp-tag comp-tag--original">{{ 'comp_original_tag' | translate }}</span>
+                  <span class="comp-score">Score: {{ imageCompatibilityResult.compatibilityScore }}/100</span>
+                </div>
+                <div class="comp-body"><p>{{ text }}</p></div>
+              </div>
+
+              <div class="comparison-col comp-col--improved">
+                <div class="comp-col-header">
+                  <span class="comp-tag comp-tag--improved">{{ 'comp_rewritten_tag' | translate }}</span>
+                  <span class="comp-score comp-score--highlight">Score: {{ newCompatibilityScore }}/100</span>
+                </div>
+                <div class="comp-body"><p>{{ improvedTextForImage }}</p></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /panel--image-compat standalone -->
+
     <!-- ── EMPTY STATE ── -->
-    <div class="empty-state" *ngIf="!result && !loading">
+    <div class="empty-state" *ngIf="!result && !loading && !imageCompatibilityResult">
       <div class="empty-icon">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
       </div>

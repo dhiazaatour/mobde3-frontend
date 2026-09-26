@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { AnalysisResult } from '../models/analysis-result';
+import { AnalysisResult, ImageCompatibilityResult, ImproveForImageResult } from '../models/analysis-result';
 import { HistoryItem } from '../models/history';
 
 @Injectable({
@@ -18,6 +18,26 @@ export class AnalysisService {
 
   improveContent(text: string, recommendations: string[], lang: string = 'fr'): Observable<{ improvedText: string }> {
     return this.http.post<{ improvedText: string }>(`${this.apiUrl}/improve`, { text, recommendations, lang });
+  }
+
+  /**
+   * Analyse combinée texte + image via Gemini Vision.
+   * Envoie les données en multipart/form-data.
+   */
+  analyzeWithImage(text: string, type: string, image: File, lang: string = 'fr'): Observable<ImageCompatibilityResult> {
+    const formData = new FormData();
+    formData.append('text', text);
+    formData.append('type', type);
+    formData.append('lang', lang);
+    formData.append('image', image);
+    return this.http.post<ImageCompatibilityResult>(`${this.apiUrl}/analyze-with-image`, formData);
+  }
+
+  /**
+   * Réécrit le texte pour qu'il corresponde à l'image, via Gemini Vision.
+   */
+  improveTextForImage(text: string, imageUrl: string, type: string, lang: string = 'fr'): Observable<ImproveForImageResult> {
+    return this.http.post<ImproveForImageResult>(`${this.apiUrl}/improve-text-for-image`, { text, imageUrl, type, lang });
   }
 
   getHistory(): Observable<HistoryItem[]> {

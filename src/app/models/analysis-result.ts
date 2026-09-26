@@ -11,3 +11,18 @@ export interface AnalysisResult {
   recommendations: string[];
   contentType: string;
 }
+
+export interface ImageCompatibilityResult {
+  compatibilityScore: number;
+  explanation: string;
+  strengths?: string[];
+  weaknesses?: string[];
+  suggestions: string[];
+  imageUrl: string;
+  analysisId?: number;
+}
+
+export interface ImproveForImageResult {
+  improvedText: string;
+  newCompatibilityScore: number;
+}

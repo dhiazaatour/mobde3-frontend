@@ -352,6 +352,164 @@ export const TRANSLATIONS: Translations = {
     fr: "Déjà un compte ?",
     en: "Already have an account?",
     ar: "لديك حساب بالفعل؟"
+  },
+
+  // ══ IMAGE UPLOAD & COMPATIBILITÉ ══
+  image_upload_label: {
+    fr: "Ajouter une image (optionnel)",
+    en: "Add an image (optional)",
+    ar: "إضافة صورة (اختياري)"
+  },
+  image_upload_hint: {
+    fr: "JPG, PNG, WebP · max 5 Mo",
+    en: "JPG, PNG, WebP · max 5 MB",
+    ar: "JPG, PNG, WebP · 5 ميغا بايت كحد أقصى"
+  },
+  image_upload_cta: {
+    fr: "Cliquer pour sélectionner une image",
+    en: "Click to select an image",
+    ar: "انقر لاختيار صورة"
+  },
+  btn_analyze_image: {
+    fr: "Analyser texte + image",
+    en: "Analyze text + image",
+    ar: "تحليل النص + الصورة"
+  },
+  btn_analyzing_image: {
+    fr: "Analyse en cours…",
+    en: "Analyzing…",
+    ar: "جارٍ التحليل…"
+  },
+  image_compat_title: {
+    fr: "Compatibilité Texte / Image",
+    en: "Text / Image Compatibility",
+    ar: "توافق النص / الصورة"
+  },
+  image_compat_explanation: {
+    fr: "Analyse",
+    en: "Analysis",
+    ar: "التحليل"
+  },
+  image_compat_suggestions: {
+    fr: "Suggestions d'amélioration",
+    en: "Improvement suggestions",
+    ar: "اقتراحات التحسين"
+  },
+  image_error_format: {
+    fr: "Format non supporté. Utilisez JPG, PNG ou WebP.",
+    en: "Unsupported format. Use JPG, PNG or WebP.",
+    ar: "صيغة غير مدعومة. استخدم JPG أو PNG أو WebP."
+  },
+  image_error_size: {
+    fr: "L'image dépasse 5 Mo. Choisissez un fichier plus petit.",
+    en: "Image exceeds 5 MB. Please choose a smaller file.",
+    ar: "حجم الصورة يتجاوز 5 ميغابايت. اختر ملفاً أصغر حجماً."
+  },
+  image_error_missing: {
+    fr: "Veuillez sélectionner une image avant de lancer l'analyse.",
+    en: "Please select an image before running the analysis.",
+    ar: "يرجى اختيار صورة قبل بدء التحليل."
+  },
+  image_error_missing_text: {
+    fr: "Veuillez saisir un texte avant d'analyser avec une image.",
+    en: "Please enter some text before analyzing with an image.",
+    ar: "يرجى إدخال نص قبل التحليل مع صورة."
+  },
+  image_error_api: {
+    fr: "Erreur lors de l'analyse image. Veuillez réessayer.",
+    en: "Image analysis failed. Please try again.",
+    ar: "فشل تحليل الصورة. يرجى المحاولة مجدداً."
+  },
+
+  // ══ ANALYSE DE QUALITÉ (Tâche 1 — redesign carte texte) ══
+  quality_analysis_title: {
+    fr: "ANALYSE DE QUALITÉ",
+    en: "QUALITY ANALYSIS",
+    ar: "تحليل الجودة"
+  },
+  quality_analysis_label: {
+    fr: "Analyse",
+    en: "Analysis",
+    ar: "التحليل"
+  },
+  quality_criteria_label: {
+    fr: "CRITÈRES DE QUALITÉ",
+    en: "QUALITY CRITERIA",
+    ar: "معايير الجودة"
+  },
+
+  // ══ RÉÉCRITURE POUR IMAGE (Tâche 2) ══
+  btn_improve_for_image: {
+    fr: "Réécrire le texte pour cette image",
+    en: "Rewrite text for this image",
+    ar: "إعادة كتابة النص لهذه الصورة"
+  },
+  btn_improving_for_image: {
+    fr: "Réécriture en cours…",
+    en: "Rewriting…",
+    ar: "جارٍ إعادة الكتابة…"
+  },
+  image_improved_title: {
+    fr: "Texte réécrit pour l'image",
+    en: "Text rewritten for the image",
+    ar: "النص المعاد كتابته للصورة"
+  },
+  image_improved_badge: {
+    fr: "Optimisé",
+    en: "Optimized",
+    ar: "محسَّن"
+  },
+  image_new_score: {
+    fr: "Nouveau score de compatibilité",
+    en: "New compatibility score",
+    ar: "درجة التوافق الجديدة"
+  },
+  image_improve_error: {
+    fr: "Erreur lors de la réécriture. Veuillez réessayer.",
+    en: "Rewriting failed. Please try again.",
+    ar: "فشلت إعادة الكتابة. يرجى المحاولة مجدداً."
+  },
+  btn_use_rewritten: {
+    fr: "Utiliser ce texte",
+    en: "Use this text",
+    ar: "استخدام هذا النص"
+  },
+  btn_compare_image: {
+    fr: "Comparer",
+    en: "Compare",
+    ar: "مقارنة"
+  },
+  btn_hide_compare_image: {
+    fr: "Masquer",
+    en: "Hide",
+    ar: "إخفاء"
+  },
+  comp_rewritten_tag: {
+    fr: "Réécrit",
+    en: "Rewritten",
+    ar: "معاد كتابته"
+  },
+
+  // ══ POINTS FORTS & POINTS FAIBLES ══
+  points_forts_title: {
+    fr: "POINTS FORTS",
+    en: "STRENGTHS",
+    ar: "نقاط القوة"
+  },
+  points_faibles_title: {
+    fr: "POINTS FAIBLES",
+    en: "WEAKNESSES",
+    ar: "نقاط الضعف"
+  },
+  no_strengths_notable: {
+    fr: "Aucun point fort particulier détecté",
+    en: "No notable strengths detected",
+    ar: "لم يتم رصد نقاط قوة محددة"
+  },
+  no_weaknesses_notable: {
+    fr: "Aucun point faible notable",
+    en: "No notable weaknesses",
+    ar: "لا توجد نقاط ضعف بارزة"
   }
 };
 
